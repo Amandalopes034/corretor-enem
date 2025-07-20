@@ -1,7 +1,8 @@
 import streamlit as st
 import openai
+import os
 
-# 🎨 Oculta a barra lateral (não será usada)
+# 🎨 Oculta a barra lateral
 hide_sidebar = """
 <style>
     [data-testid="stSidebar"] {display: none;}
@@ -9,23 +10,22 @@ hide_sidebar = """
 """
 st.markdown(hide_sidebar, unsafe_allow_html=True)
 
-# 🚀 Configurações da página
+# 🚀 Configuração da página
 st.set_page_config(page_title="Corretor ENEM Dialógico", layout="wide")
 st.title("📝 Corretor de Redações - ENEM com Análise Dialógica")
 
-# 🔐 CHAVE API
-openai_api_key = "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"  # ⬅️ Substitua pelo seu sk-...
-openai.api_key = openai_api_key
+# 🔐 Chave de API via variável secreta
+openai.api_key = os.environ["OPENAI_API_KEY"]
 
-# 📝 Campo para colar a redação
+# 📝 Campo de entrada da redação
 texto = st.text_area("Cole sua redação aqui:", height=400)
 
-# ▶️ Botão de correção
+# ▶️ Botão para acionar correção
 if st.button("Corrigir Redação"):
     if not texto.strip():
         st.warning("⚠️ Por favor, cole uma redação antes de corrigir.")
     else:
-        with st.spinner("⏳ Corrigindo..."):
+        with st.spinner("⏳ Corrigindo... isso pode levar alguns segundos"):
             prompt = f"""
 Você é um avaliador experiente do ENEM e também um linguista com abordagem dialógica (inspirado em Bakhtin).
 
@@ -39,7 +39,7 @@ Sua tarefa é:
 
 Para cada trecho, use o formato:
 "Trecho problemático"
-Comentário: explicação e sugestão de melhoria.
+Comentário: explicação do problema e sugestão de melhoria.
 
 2. Em seguida, faça uma **análise linguística dialógica geral**, considerando:
 - O projeto de dizer do autor
