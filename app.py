@@ -2,76 +2,49 @@ import streamlit as st
 import openai
 import os
 
-# 🎨 Oculta a barra lateral
-hide_sidebar = """
-<style>
-    [data-testid="stSidebar"] {display: none;}
-</style>
-"""
-st.markdown(hide_sidebar, unsafe_allow_html=True)
-
-# 🚀 Configuração da página
-st.set_page_config(page_title="Corretor ENEM Dialógico", layout="wide")
+# Título do app
+st.set_page_config(page_title="Corretor ENEM com Análise Dialógica", layout="wide")
 st.title("📝 Corretor de Redações - ENEM com Análise Dialógica")
 
-# 🔐 Chave de API via variável secreta
+# Coleta a chave secreta da OpenAI (armazenada nos secrets do Streamlit Cloud)
 openai.api_key = os.environ["OPENAI_API_KEY"]
 
-# 📝 Campo de entrada da redação
-texto = st.text_area("Cole sua redação aqui:", height=400)
+# Campo para colar a redação
+st.markdown("### Cole sua redação abaixo:")
+texto = st.text_area("Redação", height=300)
 
-# ▶️ Botão para acionar correção
+# Botão de envio
 if st.button("Corrigir Redação"):
     if not texto.strip():
-        st.warning("⚠️ Por favor, cole uma redação antes de corrigir.")
+        st.warning("Por favor, cole uma redação antes de enviar.")
     else:
-        with st.spinner("⏳ Corrigindo... isso pode levar alguns segundos"):
+        with st.spinner("Corrigindo..."):
+
             prompt = f"""
-Você é um avaliador experiente do ENEM e também um linguista com abordagem dialógica (inspirado em Bakhtin).
+Você é um corretor especializado em redações do ENEM. Avalie o texto a seguir com dois objetivos:
 
-Sua tarefa é:
-1. Ler a redação abaixo e identificar **todos os trechos problemáticos**, como:
-- Argumentação fraca ou contraditória
-- Problemas de coesão ou progressão
-- Apagamento de vozes sociais
-- Silenciamento de sentidos
-- Problemas enunciativos
-
-Para cada trecho, use o formato:
-"Trecho problemático"
-Comentário: explicação do problema e sugestão de melhoria.
-
-2. Em seguida, faça uma **análise linguística dialógica geral**, considerando:
-- O projeto de dizer do autor
-- A progressão argumentativa
-- Presença ou ausência de vozes sociais
-- Coerência enunciativa
-
-3. Depois, atribua uma nota de 0 a 200 para cada competência do ENEM com justificativa curta:
-- C1: Norma padrão
-- C2: Compreensão da proposta
-- C3: Organização dos argumentos
-- C4: Coesão textual
-- C5: Proposta de intervenção
-
-4. Por fim, forneça a **nota final de 0 a 1000**.
+1. Faça comentários por trechos, destacando partes do texto que apresentem problemas de coesão, argumentação, estrutura, inadequações gramaticais ou desvios do projeto de dizer do autor. Use destaques **negrito** nos trechos e faça comentários explicativos abaixo de cada trecho problemático.
+2. Ao final, forneça uma nota para cada uma das 5 competências do ENEM (de 0 a 200), seguidas da nota final (soma das 5).
 
 Redação:
-{texto}
+\"\"\"{texto}\"\"\"
+
+Formato de saída:
+- Comentários por trechos com marcação clara (**trecho**) e explicação
+- Tabela com notas das 5 competências + nota final
 """
 
-            resposta = openai.ChatCompletion.create(
-                model="gpt-4-turbo",
-                messages=[
-                    {"role": "system", "content": "Você é um corretor do ENEM com formação linguística dialógica."},
-                    {"role": "user", "content": prompt}
-                ],
-                temperature=0.7,
-                max_tokens=2500
-            )
+            try:
+                response = openai.ChatCompletion.create(
+                    model="gpt-4-turbo",
+                    messages=[{"role": "user", "content": prompt}],
+                    temperature=0.3,
+                    max_tokens=1200
+                )
 
-            resultado = resposta['choices'][0]['message']['content']
+                resultado = response.choices[0].message.content
+                st.markdown("### ✅ Resultado da Correção:")
+                st.markdown(resultado)
 
-            st.markdown("## 📄 Resultado da Correção:")
-            st.markdown("---")
-            st.markdown(resultado)
+            except Exception as e:
+                st.error(f"Erro ao acessar a API da OpenAI: {e}")
