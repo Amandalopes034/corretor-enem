@@ -8,83 +8,66 @@ from fpdf import FPDF
 load_dotenv()
 openai.api_key = os.environ["OPENAI_API_KEY"]
 
-st.set_page_config(page_title="Corretor ENEM com ALD", layout="wide")
-st.title("📚 Corretor de Redações - ENEM com Análise Dialógica")
+st.set_page_config(page_title="Corretor Dialógico ENEM com ALD", layout="wide")
+st.title("📚 Corretor de Redações - ENEM com Devolutiva Dialógica")
 
-texto = st.text_area("✍️ Cole aqui a redação do aluno para análise completa:", height=300)
+st.markdown("Esta ferramenta oferece **devolutivas formativas**, com base nas competências do ENEM e na **Análise Linguística de Base Dialógica (ALD)**. O objetivo é **promover a reflexão crítica e a reescrita consciente** da redação.")
+
+texto = st.text_area("✍️ Cole aqui a redação do aluno para análise dialógica completa:", height=300)
 
 def construir_prompt(texto):
     return f"""
-Você é um corretor experiente do ENEM, com domínio da matriz de competências e da Análise Linguística de Base Dialógica (ALD).
+Você é um corretor experiente do ENEM com domínio da matriz de competências e formação sólida em Análise Linguística de Base Dialógica (ALD).
 
-Corrija a redação a seguir com base nas 5 competências do ENEM. Utilize os critérios abaixo (baseados na cartilha oficial do INEP) e lembre-se:
+Sua função é **oferecer uma devolutiva crítica, detalhada e formativa**, com base nas 5 competências do ENEM, de forma dialógica e sensível ao sujeito que escreve.
 
-⚠️ Elenque **todos os erros e inconsistências** encontrados em cada competência, mas **considere que até 2 erros pontuais não justificam desconto na nota**, a menos que comprometam gravemente a compreensão do texto.
+Evite dar notas. Em vez disso, oriente o aluno por meio de **perguntas, provocações e sugestões construtivas**, promovendo a **reescrita consciente e reflexiva**.
 
-**Competência 1: Norma padrão da língua escrita**
-- Avalie ortografia, acentuação, pontuação, concordância, regência, crase, tempos verbais e construção sintática.
-- Penalize reincidência ou erros que dificultem a leitura. Desconsidere até 2 erros pontuais se não interferirem no entendimento.
+Para cada competência (C1 a C5):
+- Destaque **aspectos positivos**.
+- Enumere **todos os erros, inconsistências ou fragilidades**, mesmo que pequenos.
+- Para cada problema, ofereça:
+  - Uma **explicação clara do que está inadequado**.
+  - O **trecho exato do texto**.
+  - Uma **sugestão de reescrita com justificativa linguística/discursiva**.
+  - Uma **pergunta provocadora** para ajudar o aluno a refletir.
 
-**Competência 2: Compreensão da proposta de redação**
-- Verifique se o texto atende integralmente ao tema e à proposta dissertativo-argumentativa.
-- Penalize tangenciamento ou fuga parcial. Avalie o uso produtivo dos textos motivadores.
+No fim da análise, apresente uma **Síntese Dialógica Geral**, com base na ALD:
+- Qual é o **projeto de dizer do sujeito**?
+- Há coerência e progressão argumentativa?
+- Quais **vozes sociais** aparecem no texto? Elas dialogam entre si?
+- Que efeitos de sentido o texto produz em relação ao tema proposto?
+- O que a linguagem revela sobre o posicionamento do aluno diante do tema?
 
-**Competência 3: Seleção e organização de argumentos**
-- Avalie a construção da tese, progressão lógica, articulação de ideias, repertório e profundidade.
-
-**Competência 4: Coesão textual**
-- Avalie conectivos, coesão referencial, sequencial e lexical. Verifique fluidez e uso adequado de mecanismos coesivos.
-
-**Competência 5: Proposta de intervenção**
-- A proposta deve apresentar: agente, ação, meio/modo, finalidade e detalhamento. Penalize propostas vagas ou sem conexão com o problema abordado.
-
-**Para cada competência (C1 a C5):**
-1. Informe a nota objetiva (0–200)
-2. Explique os critérios aplicados
-3. Liste os pontos positivos e negativos observados
-4. Destaque exemplos concretos do texto
-5. Justifique didaticamente, como para outro professor
-
-🔍 Em seguida, forneça **comentários por trecho problemático**, com:
-- Qual é o problema
-- Trecho exato
-- Sugestão de reescrita
-
-🧠 Finalize com uma **Análise Dialógica Geral**, considerando:
-- Projeto de dizer do sujeito
-- Coerência e progressão argumentativa
-- Presença de vozes sociais
-- Relação entre texto e contexto
+Use linguagem acessível, mas crítica. Fale com o aluno como um mentor reflexivo.
 
 Redação do aluno:
 """
 {texto}
 """
-"""
 
-if st.button("🔍 Corrigir Redação") and texto:
-    with st.spinner("Analisando a redação com base dialógica..."):
+if st.button("🧠 Analisar Redação com Devolutiva Dialógica") and texto:
+    with st.spinner("Gerando análise crítica e dialógica da redação..."):
         try:
             response = openai.ChatCompletion.create(
                 model="gpt-4-turbo",
                 messages=[{"role": "user", "content": construir_prompt(texto)}],
                 temperature=0.3
             )
-            correcao = response.choices[0].message.content
+            devolutiva = response.choices[0].message.content
 
-            st.markdown("## ✅ Resultado da Correção")
-            st.write(correcao)
+            st.markdown("## ✅ Devolutiva Dialógica da Redação")
+            st.write(devolutiva)
 
-            # Opção para gerar PDF
-            if st.button("📄 Gerar PDF com a correção"):
+            if st.button("📄 Gerar PDF da Devolutiva"):
                 pdf = FPDF()
                 pdf.add_page()
                 pdf.set_font("Arial", size=12)
-                for linha in correcao.split('\n'):
+                for linha in devolutiva.split('\n'):
                     pdf.multi_cell(0, 10, linha)
-                pdf.output("correcao_redacao.pdf")
-                with open("correcao_redacao.pdf", "rb") as f:
-                    st.download_button("📥 Baixar PDF da Correção", f, file_name="correcao_redacao.pdf")
+                pdf.output("devolutiva_dialógica.pdf")
+                with open("devolutiva_dialógica.pdf", "rb") as f:
+                    st.download_button("📥 Baixar PDF da Devolutiva", f, file_name="devolutiva_redacao_enem.pdf")
 
         except Exception as e:
-            st.error(f"Erro durante a correção: {str(e)}")
+            st.error(f"Erro durante a análise: {str(e)}")
