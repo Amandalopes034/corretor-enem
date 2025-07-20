@@ -42,9 +42,9 @@ No fim da análise, apresente uma **Síntese Dialógica Geral**, com base na ALD
 Use linguagem acessível, mas crítica. Fale com o aluno como um mentor reflexivo.
 
 Redação do aluno:
-"""
+""
 {texto}
-"""
+""
 
 if st.button("🧠 Analisar Redação com Devolutiva Dialógica") and texto:
     with st.spinner("Gerando análise crítica e dialógica da redação..."):
