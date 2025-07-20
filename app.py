@@ -2,71 +2,87 @@ import streamlit as st
 import openai
 import os
 
-# 🔐 Chave da OpenAI via secrets
-openai.api_key = st.secrets["OPENAI_API_KEY"]
+# Chave via secrets
+openai.api_key = os.environ["OPENAI_API_KEY"]
 
-# Configuração da interface
-st.set_page_config(page_title="Corretor ENEM - GPT-4", layout="wide")
-st.title("📝 Corretor de Redações ENEM com Análise Dialógica (GPT-4)")
+st.set_page_config(page_title="Corretor de Redações - ENEM com Análise Dialógica")
 
-st.markdown("Cole abaixo sua redação. A análise incluirá comentários por trecho, leitura dialógica e notas com base nas 5 competências do ENEM.")
+st.title("📝 Corretor de Redações - ENEM com Análise Dialógica")
 
-# Entrada da redação
-redacao = st.text_area("Cole sua redação aqui:", height=350)
+# Entrada de texto
+texto = st.text_area("Cole sua redação abaixo:", height=300)
 
-# Botão de correção
+# Botão
 if st.button("Corrigir Redação"):
-    if not redacao.strip():
-        st.warning("⚠️ Por favor, cole sua redação antes de enviar.")
-        st.stop()
 
-    with st.spinner("Analisando com GPT-4..."):
+    with st.spinner("Analisando sua redação..."):
 
         prompt = f"""
-Você é um corretor oficial do ENEM com formação em análise linguística dialógica.
+Você é um corretor experiente do ENEM com formação em linguística e análise dialógica.
 
-Leia a redação abaixo e produza:
+Sua tarefa é ler a redação abaixo e gerar uma correção detalhada em **três blocos principais**:
 
-1. Comentários por trechos com problemas. Para cada trecho:
-   - Destaque o texto problemático entre aspas
-   - Faça um comentário explicativo, apontando o problema e sugerindo melhorias
+---
 
-2. Uma análise dialógica geral, considerando:
-   - Projeto de dizer do sujeito
-   - Coerência e progressão argumentativa
-   - Presença (ou ausência) de vozes sociais
-   - Relação entre texto e contexto
+**1. Comentários por trechos problemáticos**  
+Para cada trecho com problemas, siga este formato:
+- Trecho entre aspas
+- Problema identificado com clareza
+- Explicação do impacto do problema
+- Sugestão clara de reescrita ou melhoria
 
-3. Atribua nota (0 a 200) para cada uma das 5 competências do ENEM, com justificativas curtas:
-   - C1: Norma padrão
-   - C2: Compreensão da proposta
-   - C3: Organização dos argumentos
-   - C4: Coesão textual
-   - C5: Proposta de intervenção
+---
 
-4. Informe a nota final (0 a 1000), soma das cinco competências.
+**2. Análise dialógica geral**, cobrindo os seguintes aspectos:
+- Projeto de dizer do sujeito
+- Coerência e progressão argumentativa
+- Presença (ou ausência) de vozes sociais
+- Relação entre texto e contexto
 
-Redação:
-\"\"\"{redacao}\"\"\"
+---
+
+**3. Avaliação das 5 competências do ENEM**  
+Siga o formato abaixo, sendo **detalhista nas justificativas**:
+
+**C1: Norma padrão**  
+Nota (0-200): X  
+Justificativa: [explique detalhadamente o uso da ortografia, concordância, pontuação, regência, crase, etc. Dê exemplos concretos.]
+
+**C2: Compreensão da proposta**  
+Nota (0-200): X  
+Justificativa: [explique como o texto atende à proposta, se tangenciou, como interpreta o tema, etc.]
+
+**C3: Organização dos argumentos**  
+Nota (0-200): X  
+Justificativa: [explique a estrutura textual, progressão das ideias, repetições, falhas argumentativas etc.]
+
+**C4: Coesão textual**  
+Nota (0-200): X  
+Justificativa: [explique o uso de conectivos, retomadas, articulações entre frases e parágrafos.]
+
+**C5: Proposta de intervenção**  
+Nota (0-200): X  
+Justificativa: [explique se há proposta clara, agentes, ações, meios, finalidade e detalhamento suficiente.]
+
+---
+
+Ao final, diga:  
+**Nota final: X/1000** (soma das competências)
+
+Redação a ser avaliada:
+\"\"\"{texto}\"\"\"
 """
 
         try:
             resposta = openai.ChatCompletion.create(
-                model="gpt-4-turbo",
-                messages=[
-                    {"role": "system", "content": "Você é um avaliador ENEM com abordagem linguística dialógica."},
-                    {"role": "user", "content": prompt}
-                ],
-                temperature=0.6,
-                max_tokens=1800  # pode ajustar pra caber mais saída se quiser
+                model="gpt-4",
+                messages=[{"role": "user", "content": prompt}],
+                max_tokens=3000,
+                temperature=0.4,
             )
 
-            resultado = resposta["choices"][0]["message"]["content"]
-
-            # Resultado
-            st.subheader("✅ Resultado da Correção")
-            st.markdown("---")
-            st.markdown(resultado)
+            correcao = resposta.choices[0].message["content"]
+            st.markdown(correcao)
 
         except Exception as e:
-            st.error(f"❌ Erro ao acessar a API: {e}")
+            st.error(f"Erro ao acessar a API da OpenAI: {e}")
