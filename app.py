@@ -11,40 +11,55 @@ openai.api_key = os.environ["OPENAI_API_KEY"]
 st.set_page_config(page_title="Corretor ENEM com ALD", layout="wide")
 st.title("📚 Corretor de Redações - ENEM com Análise Dialógica")
 
-texto = st.text_area("✍️ Cole aqui a redação do aluno para análise completa:")
+texto = st.text_area("✍️ Cole aqui a redação do aluno para análise completa:", height=300)
 
 def construir_prompt(texto):
     return f"""
 Você é um corretor experiente do ENEM, com domínio da matriz de competências e da Análise Linguística de Base Dialógica (ALD).
 
-Corrija a redação a seguir com base nas 5 competências do ENEM. Para cada competência:
+Corrija a redação a seguir com base nas 5 competências do ENEM. Utilize os critérios abaixo (baseados na cartilha oficial do INEP) e lembre-se:
 
-1. Atribua uma nota de 0 a 200.
-2. Liste **detalhadamente todos os trechos que motivaram desconto de nota**, com explicações claras.
-3. Explique quais critérios foram plenamente atendidos, com exemplos.
-4. Justifique didaticamente o porquê da pontuação atribuída, como se explicasse a outro professor.
-5. Use uma linguagem técnica e objetiva, adequada ao público docente.
+⚠️ Elenque **todos os erros e inconsistências** encontrados em cada competência, mas **considere que até 2 erros pontuais não justificam desconto na nota**, a menos que comprometam gravemente a compreensão do texto.
 
-Depois disso:
+**Competência 1: Norma padrão da língua escrita**
+- Avalie ortografia, acentuação, pontuação, concordância, regência, crase, tempos verbais e construção sintática.
+- Penalize reincidência ou erros que dificultem a leitura. Desconsidere até 2 erros pontuais se não interferirem no entendimento.
 
-🔍 Faça **comentários específicos em TODOS os trechos problemáticos que ocasionaram a dminuição da nota**, incluindo:
-- Qual o problema (ortografia, coerência, ambiguidade etc.);
-- Qual trecho gerou o problema;
-- Uma sugestão de reescrita mais adequada.
+**Competência 2: Compreensão da proposta de redação**
+- Verifique se o texto atende integralmente ao tema e à proposta dissertativo-argumentativa.
+- Penalize tangenciamento ou fuga parcial. Avalie o uso produtivo dos textos motivadores.
 
-🧠 Em seguida, produza uma **Análise Dialógica Geral** nos seguintes eixos:
+**Competência 3: Seleção e organização de argumentos**
+- Avalie a construção da tese, progressão lógica, articulação de ideias, repertório e profundidade.
 
-- **Projeto de dizer do sujeito** (intencionalidade discursiva);
-- **Coerência e progressão argumentativa**;
-- **Presença de vozes sociais** (autoria x discurso de outrem);
-- **Relação entre texto e contexto** (sociocultural e temático).
+**Competência 4: Coesão textual**
+- Avalie conectivos, coesão referencial, sequencial e lexical. Verifique fluidez e uso adequado de mecanismos coesivos.
 
-🔽 A redação do aluno está abaixo. Faça uma correção completa e rigorosa, seguindo todas as instruções.
+**Competência 5: Proposta de intervenção**
+- A proposta deve apresentar: agente, ação, meio/modo, finalidade e detalhamento. Penalize propostas vagas ou sem conexão com o problema abordado.
 
-Redação:
-\"\"\" 
+**Para cada competência (C1 a C5):**
+1. Informe a nota objetiva (0–200)
+2. Explique os critérios aplicados
+3. Liste os pontos positivos e negativos observados
+4. Destaque exemplos concretos do texto
+5. Justifique didaticamente, como para outro professor
+
+🔍 Em seguida, forneça **comentários por trecho problemático**, com:
+- Qual é o problema
+- Trecho exato
+- Sugestão de reescrita
+
+🧠 Finalize com uma **Análise Dialógica Geral**, considerando:
+- Projeto de dizer do sujeito
+- Coerência e progressão argumentativa
+- Presença de vozes sociais
+- Relação entre texto e contexto
+
+Redação do aluno:
+"""
 {texto}
-\"\"\"
+"""
 """
 
 if st.button("🔍 Corrigir Redação") and texto:
