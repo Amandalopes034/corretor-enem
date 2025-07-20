@@ -2,49 +2,71 @@ import streamlit as st
 import openai
 import os
 
-# Título do app
-st.set_page_config(page_title="Corretor ENEM com Análise Dialógica", layout="wide")
-st.title("📝 Corretor de Redações - ENEM com Análise Dialógica")
+# 🔐 Chave da OpenAI via secrets
+openai.api_key = st.secrets["OPENAI_API_KEY"]
 
-# Coleta a chave secreta da OpenAI (armazenada nos secrets do Streamlit Cloud)
-openai.api_key = os.environ["OPENAI_API_KEY"]
+# Configuração da interface
+st.set_page_config(page_title="Corretor ENEM - GPT-4", layout="wide")
+st.title("📝 Corretor de Redações ENEM com Análise Dialógica (GPT-4)")
 
-# Campo para colar a redação
-st.markdown("### Cole sua redação abaixo:")
-texto = st.text_area("Redação", height=300)
+st.markdown("Cole abaixo sua redação. A análise incluirá comentários por trecho, leitura dialógica e notas com base nas 5 competências do ENEM.")
 
-# Botão de envio
+# Entrada da redação
+redacao = st.text_area("Cole sua redação aqui:", height=350)
+
+# Botão de correção
 if st.button("Corrigir Redação"):
-    if not texto.strip():
-        st.warning("Por favor, cole uma redação antes de enviar.")
-    else:
-        with st.spinner("Corrigindo..."):
+    if not redacao.strip():
+        st.warning("⚠️ Por favor, cole sua redação antes de enviar.")
+        st.stop()
 
-            prompt = f"""
-Você é um corretor especializado em redações do ENEM. Avalie o texto a seguir com dois objetivos:
+    with st.spinner("Analisando com GPT-4..."):
 
-1. Faça comentários por trechos, destacando partes do texto que apresentem problemas de coesão, argumentação, estrutura, inadequações gramaticais ou desvios do projeto de dizer do autor. Use destaques **negrito** nos trechos e faça comentários explicativos abaixo de cada trecho problemático.
-2. Ao final, forneça uma nota para cada uma das 5 competências do ENEM (de 0 a 200), seguidas da nota final (soma das 5).
+        prompt = f"""
+Você é um corretor oficial do ENEM com formação em análise linguística dialógica.
+
+Leia a redação abaixo e produza:
+
+1. Comentários por trechos com problemas. Para cada trecho:
+   - Destaque o texto problemático entre aspas
+   - Faça um comentário explicativo, apontando o problema e sugerindo melhorias
+
+2. Uma análise dialógica geral, considerando:
+   - Projeto de dizer do sujeito
+   - Coerência e progressão argumentativa
+   - Presença (ou ausência) de vozes sociais
+   - Relação entre texto e contexto
+
+3. Atribua nota (0 a 200) para cada uma das 5 competências do ENEM, com justificativas curtas:
+   - C1: Norma padrão
+   - C2: Compreensão da proposta
+   - C3: Organização dos argumentos
+   - C4: Coesão textual
+   - C5: Proposta de intervenção
+
+4. Informe a nota final (0 a 1000), soma das cinco competências.
 
 Redação:
-\"\"\"{texto}\"\"\"
-
-Formato de saída:
-- Comentários por trechos com marcação clara (**trecho**) e explicação
-- Tabela com notas das 5 competências + nota final
+\"\"\"{redacao}\"\"\"
 """
 
-            try:
-                response = openai.ChatCompletion.create(
-                    model="gpt-4-turbo",
-                    messages=[{"role": "user", "content": prompt}],
-                    temperature=0.3,
-                    max_tokens=1200
-                )
+        try:
+            resposta = openai.ChatCompletion.create(
+                model="gpt-4-turbo",
+                messages=[
+                    {"role": "system", "content": "Você é um avaliador ENEM com abordagem linguística dialógica."},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.6,
+                max_tokens=1800  # pode ajustar pra caber mais saída se quiser
+            )
 
-                resultado = response.choices[0].message.content
-                st.markdown("### ✅ Resultado da Correção:")
-                st.markdown(resultado)
+            resultado = resposta["choices"][0]["message"]["content"]
 
-            except Exception as e:
-                st.error(f"Erro ao acessar a API da OpenAI: {e}")
+            # Resultado
+            st.subheader("✅ Resultado da Correção")
+            st.markdown("---")
+            st.markdown(resultado)
+
+        except Exception as e:
+            st.error(f"❌ Erro ao acessar a API: {e}")
