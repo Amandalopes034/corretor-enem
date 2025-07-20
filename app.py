@@ -16,7 +16,7 @@ st.markdown("Esta ferramenta oferece **devolutivas formativas**, com base nas co
 texto = st.text_area("✍️ Cole aqui a redação do aluno para análise dialógica completa:", height=300)
 
 def construir_prompt(texto):
-    return f"""
+    return f""
 Você é um corretor experiente do ENEM com domínio da matriz de competências e formação sólida em Análise Linguística de Base Dialógica (ALD).
 
 Sua função é **oferecer uma devolutiva crítica, detalhada e formativa**, com base nas 5 competências do ENEM, de forma dialógica e sensível ao sujeito que escreve.
