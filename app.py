@@ -1,88 +1,84 @@
-import streamlit as st
-import openai
 import os
+import openai
+import streamlit as st
+from fpdf import FPDF
+from dotenv import load_dotenv
 
-# Chave via secrets
-openai.api_key = os.environ["OPENAI_API_KEY"]
+load_dotenv()
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
-st.set_page_config(page_title="Corretor de Redações - ENEM com Análise Dialógica")
-
+st.set_page_config(page_title="Corretor de Redações - ENEM com Análise Dialógica", layout="wide")
 st.title("📝 Corretor de Redações - ENEM com Análise Dialógica")
+st.markdown("Cole sua redação abaixo e receba uma **avaliação técnica detalhada**, voltada para professores:")
 
-# Entrada de texto
-texto = st.text_area("Cole sua redação abaixo:", height=300)
+texto = st.text_area("📌 Redação do aluno:", height=300)
+gerar_pdf = False
+resultado = ""
 
-# Botão
-if st.button("Corrigir Redação"):
+prompt = f"""
+Você é um corretor experiente e detalhista, com domínio das 5 competências do ENEM. Seu público são professores de redação.
 
-    with st.spinner("Analisando sua redação..."):
+Tarefa:
+Avalie tecnicamente a redação abaixo, justificando cada ponto de forma pedagógica e específica, como um professor corrigindo para outro professor.
 
-        prompt = f"""
-Você é um corretor experiente do ENEM com formação em linguística e análise dialógica.
+Instruções:
+1. Para cada competência (C1 a C5), forneça:
+   - Nota (0–200)
+   - Justificativa técnica completa e didática
+   - Lista de **todos os aspectos positivos e negativos observados**
+   - Citações concretas da redação como evidência da nota
 
-Sua tarefa é ler a redação abaixo e gerar uma correção detalhada em **três blocos principais**:
+2. Ao final, escreva uma síntese geral da redação, destacando:
+   - Projeto de dizer do sujeito
+   - Coesão textual
+   - Presença de vozes sociais
+   - Relação com o tema e os textos motivadores
 
----
-
-**1. Comentários por trechos problemáticos**  
-Para cada trecho com problemas, siga este formato:
-- Trecho entre aspas
-- Problema identificado com clareza
-- Explicação do impacto do problema
-- Sugestão clara de reescrita ou melhoria
-
----
-
-**2. Análise dialógica geral**, cobrindo os seguintes aspectos:
-- Projeto de dizer do sujeito
-- Coerência e progressão argumentativa
-- Presença (ou ausência) de vozes sociais
-- Relação entre texto e contexto
-
----
-
-**3. Avaliação das 5 competências do ENEM**  
-Siga o formato abaixo, sendo **detalhista nas justificativas**:
-
-**C1: Norma padrão**  
-Nota (0-200): X  
-Justificativa: [explique detalhadamente o uso da ortografia, concordância, pontuação, regência, crase, etc. Dê exemplos concretos.]
-
-**C2: Compreensão da proposta**  
-Nota (0-200): X  
-Justificativa: [explique como o texto atende à proposta, se tangenciou, como interpreta o tema, etc.]
-
-**C3: Organização dos argumentos**  
-Nota (0-200): X  
-Justificativa: [explique a estrutura textual, progressão das ideias, repetições, falhas argumentativas etc.]
-
-**C4: Coesão textual**  
-Nota (0-200): X  
-Justificativa: [explique o uso de conectivos, retomadas, articulações entre frases e parágrafos.]
-
-**C5: Proposta de intervenção**  
-Nota (0-200): X  
-Justificativa: [explique se há proposta clara, agentes, ações, meios, finalidade e detalhamento suficiente.]
-
----
-
-Ao final, diga:  
-**Nota final: X/1000** (soma das competências)
-
-Redação a ser avaliada:
-\"\"\"{texto}\"\"\"
+Redação:
+\"\"\"
+{texto}
+\"\"\"
 """
 
-        try:
-            resposta = openai.ChatCompletion.create(
-                model="gpt-4",
-                messages=[{"role": "user", "content": prompt}],
-                max_tokens=3000,
-                temperature=0.4,
+def gerar_pdf_saida(conteudo, nome_arquivo="correcao_redacao.pdf"):
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_auto_page_break(auto=True, margin=15)
+    pdf.set_font("Arial", size=12)
+    for linha in conteudo.split("\n"):
+        pdf.multi_cell(0, 10, linha)
+    pdf.output(nome_arquivo)
+    return nome_arquivo
+
+if st.button("Corrigir Redação"):
+    if not texto.strip():
+        st.warning("Por favor, cole a redação antes de corrigir.")
+    else:
+        with st.spinner("Corrigindo a redação..."):
+            try:
+                response = openai.ChatCompletion.create(
+                    model="gpt-4",
+                    messages=[
+                        {"role": "system", "content": "Você é um corretor especialista do ENEM."},
+                        {"role": "user", "content": prompt}
+                    ],
+                    temperature=0.4,
+                    max_tokens=2200
+                )
+                resultado = response.choices[0].message.content
+                st.markdown("## 📋 Comentários detalhados da correção:")
+                st.markdown(resultado)
+                gerar_pdf = True
+            except Exception as e:
+                st.error(f"Erro ao acessar a API da OpenAI: {e}")
+
+if gerar_pdf and resultado:
+    if st.button("📄 Gerar PDF da correção"):
+        nome_pdf = gerar_pdf_saida(resultado)
+        with open(nome_pdf, "rb") as f:
+            st.download_button(
+                label="📥 Clique para baixar a correção em PDF",
+                data=f,
+                file_name=nome_pdf,
+                mime="application/pdf"
             )
-
-            correcao = resposta.choices[0].message["content"]
-            st.markdown(correcao)
-
-        except Exception as e:
-            st.error(f"Erro ao acessar a API da OpenAI: {e}")
